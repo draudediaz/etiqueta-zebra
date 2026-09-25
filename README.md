@@ -8,7 +8,7 @@ Descarrega [`EtiquetaZebra.apk`](EtiquetaZebra.apk) al mòbil (botó de descàrr
 
 1. Aparella la ZQ320 Plus des dels ajustos de Bluetooth del mòbil.
 2. Obre l'app i accepta el permís de *Dispositius propers*.
-3. Tria la impressora (recorda l'última), ajusta ample/alçada en mm si cal (per defecte 48 × 25) i imprimeix.
+3. Tria la impressora (recorda l'última), ajusta ample/alçada en mm si cal (per defecte 72 × 25) i imprimeix.
 
 ## Compilar
 
@@ -22,8 +22,8 @@ Sense Gradle, amb les eines de l'SDK d'Android (a Ubuntu: `apt install android-s
 
 ## ZPL generat
 
-Per al número `123456789012` amb etiqueta de 48 × 25 mm:
+Per al número `12345` amb etiqueta de 72 × 25 mm:
 
 ```
-^XA^CI28^PW384^LL200^LH0,0^FO40,24^BY3,3,152^BCN,152,N,N,N,A^FD123456789012^FS^XZ
+^XA^CI28^PW576^LL200^LH0,0^MNY^CF0,30^FO130,24^BY4,3,112^BCN,112,Y,N,N,A^FD12345^FS^XZ
 ```

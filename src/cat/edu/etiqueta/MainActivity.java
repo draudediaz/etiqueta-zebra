@@ -130,15 +130,15 @@ public class MainActivity extends Activity {
         LinearLayout mides = new LinearLayout(this);
         mides.setOrientation(LinearLayout.HORIZONTAL);
         mides.setPadding(0, dp(16), 0, 0);
-        ample = campMida(prefs.getInt("ample", 48));
-        alcada = campMida(prefs.getInt("alcada", 25));
+        ample = campMida(prefs.getInt("ampleMm", 72));
+        alcada = campMida(prefs.getInt("alcadaMm", 25));
         mides.addView(columna("Ample (mm)", ample), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         mides.addView(columna("Alçada (mm)", alcada), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         arrel.addView(mides);
 
         mostrarText = new CheckBox(this);
         mostrarText.setText("Mostrar el número sota el codi");
-        mostrarText.setChecked(prefs.getBoolean("text", false));
+        mostrarText.setChecked(prefs.getBoolean("mostrarNumero", true));
         arrel.addView(mostrarText);
 
         ScrollView scroll = new ScrollView(this);
@@ -220,14 +220,14 @@ public class MainActivity extends Activity {
             mostrarEstat("Tria una impressora aparellada.", true);
             return;
         }
-        final int mmAmple = llegir(ample, 48);
+        final int mmAmple = llegir(ample, 72);
         final int mmAlcada = llegir(alcada, 25);
         final String adreca = adreces.get(pos);
         prefs.edit()
                 .putString("impressora", adreca)
-                .putInt("ample", mmAmple)
-                .putInt("alcada", mmAlcada)
-                .putBoolean("text", mostrarText.isChecked())
+                .putInt("ampleMm", mmAmple)
+                .putInt("alcadaMm", mmAlcada)
+                .putBoolean("mostrarNumero", mostrarText.isChecked())
                 .apply();
 
         final String zpl = Zpl.etiqueta(num, mmAmple, mmAlcada, mostrarText.isChecked());
@@ -237,7 +237,9 @@ public class MainActivity extends Activity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String error = enviar(adreca, zpl);
+                final String clauZpl = "zpl_" + adreca;
+                String error = enviar(adreca, zpl, !prefs.getBoolean(clauZpl, false));
+                if (error == null) prefs.edit().putBoolean(clauZpl, true).apply();
                 final String missatge = error == null ? "Imprès: " + num : "Error: " + error;
                 final boolean esError = error != null;
                 runOnUiThread(new Runnable() {
@@ -265,7 +267,7 @@ public class MainActivity extends Activity {
     }
 
     /** Envia el ZPL per Bluetooth clàssic (SPP). Retorna null si ha anat bé, o el missatge d'error. */
-    private static String enviar(String adreca, String zpl) {
+    private static String enviar(String adreca, String zpl, boolean configurar) {
         BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();
         if (bt == null || !bt.isEnabled()) return "el Bluetooth està desactivat";
         BluetoothDevice impressora = bt.getRemoteDevice(adreca);
@@ -280,10 +282,14 @@ public class MainActivity extends Activity {
                 socket.connect();
             }
             OutputStream out = socket.getOutputStream();
-            // Si la impressora està en mode línia (line_print) imprimiria el ZPL com a text: la passem a ZPL.
-            out.write("! U1 setvar \"device.languages\" \"zpl\"\r\n".getBytes(StandardCharsets.US_ASCII));
-            out.flush();
-            Thread.sleep(500);
+            if (configurar) {
+                // Primer cop amb aquesta impressora: si està en mode línia (line_print) imprimiria el ZPL com a text,
+                // així que la passem a ZPL i li diem que el paper són etiquetes, no rotllo continu.
+                out.write(("! U1 setvar \"device.languages\" \"zpl\"\r\n"
+                        + "! U1 setvar \"media.type\" \"label\"\r\n").getBytes(StandardCharsets.US_ASCII));
+                out.flush();
+                Thread.sleep(1000);
+            }
             out.write(zpl.getBytes(StandardCharsets.UTF_8));
             out.flush();
             // Les impressores mòbils Zebra poden perdre dades si es tanca la connexió massa aviat.

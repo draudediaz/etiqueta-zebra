@@ -16,11 +16,11 @@ public final class Zpl {
         int simbols = 2 + n / 2 + (n % 2 == 1 ? 2 : 0);
         int moduls = simbols * 11 + 13;
 
-        int modul = 3;
+        int modul = 4;
         while (modul > 1 && moduls * modul > ample - 2 * DPMM) modul--;
 
         int margeVertical = 3 * DPMM;
-        int text = mostrarText ? 4 * DPMM : 0;
+        int text = mostrarText ? 5 * DPMM : 0;
         int alcadaBarres = Math.max(4 * DPMM, alcada - 2 * margeVertical - text);
         int x = Math.max(0, (ample - moduls * modul) / 2);
 
@@ -29,6 +29,8 @@ public final class Zpl {
                 + "^PW" + ample
                 + "^LL" + alcada
                 + "^LH0,0"
+                + "^MNY"   // etiquetes amb separació (gap)
+                + "^CF0,30"
                 + "^FO" + x + "," + margeVertical
                 + "^BY" + modul + ",3," + alcadaBarres
                 + "^BCN," + alcadaBarres + "," + (mostrarText ? "Y" : "N") + ",N,N,A"
