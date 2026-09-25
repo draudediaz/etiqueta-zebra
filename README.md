@@ -18,7 +18,7 @@ Sense Gradle, amb les eines de l'SDK d'Android (a Ubuntu: `apt install android-s
 ./build.sh
 ```
 
-`etiqueta.keystore` és la clau de signatura (contrasenya `etiqueta`); mantenir-la fa que les noves versions s'instal·lin per sobre de l'anterior.
+`build.sh` crea una clau de signatura `etiqueta.keystore` si no existeix (no es puja al repositori). Si canvia la clau, cal desinstal·lar la versió anterior abans d'instal·lar-ne una de nova.
 
 ## ZPL generat
 
