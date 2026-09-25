@@ -280,6 +280,10 @@ public class MainActivity extends Activity {
                 socket.connect();
             }
             OutputStream out = socket.getOutputStream();
+            // Si la impressora està en mode línia (line_print) imprimiria el ZPL com a text: la passem a ZPL.
+            out.write("! U1 setvar \"device.languages\" \"zpl\"\r\n".getBytes(StandardCharsets.US_ASCII));
+            out.flush();
+            Thread.sleep(500);
             out.write(zpl.getBytes(StandardCharsets.UTF_8));
             out.flush();
             // Les impressores mòbils Zebra poden perdre dades si es tanca la connexió massa aviat.
