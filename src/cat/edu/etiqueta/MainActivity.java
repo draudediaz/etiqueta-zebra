@@ -41,6 +41,7 @@ public class MainActivity extends Activity {
     private EditText ample;
     private EditText alcada;
     private CheckBox mostrarText;
+    private Spinner paper;
     private Spinner impressores;
     private Button imprimir;
     private TextView estat;
@@ -141,6 +142,27 @@ public class MainActivity extends Activity {
         mostrarText.setChecked(prefs.getBoolean("mostrarNumero", true));
         arrel.addView(mostrarText);
 
+        arrel.addView(etiqueta("Tipus de paper"));
+        paper = new Spinner(this);
+        ArrayAdapter<String> tipus = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zpl.TIPUS_PAPER);
+        tipus.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        paper.setAdapter(tipus);
+        paper.setSelection(Math.min(prefs.getInt("paper", 0), Zpl.TIPUS_PAPER.length - 1));
+        arrel.addView(paper);
+
+        Button calibrar = new Button(this);
+        calibrar.setText("Calibrar impressora");
+        calibrar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                calibrar();
+            }
+        });
+        LinearLayout.LayoutParams lpCalibrar = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lpCalibrar.topMargin = dp(16);
+        arrel.addView(calibrar, lpCalibrar);
+
         ScrollView scroll = new ScrollView(this);
         scroll.addView(arrel);
         setContentView(scroll);
@@ -215,39 +237,60 @@ public class MainActivity extends Activity {
             mostrarEstat("Escriu un número.", true);
             return;
         }
-        int pos = impressores.getSelectedItemPosition();
-        if (!tePermis() || pos < 0 || pos >= adreces.size()) {
-            mostrarEstat("Tria una impressora aparellada.", true);
-            return;
-        }
-        final int mmAmple = llegir(ample, 72);
-        final int mmAlcada = llegir(alcada, 25);
-        final String adreca = adreces.get(pos);
+        final String adreca = impressoraTriada();
+        if (adreca == null) return;
+        int mmAmple = llegir(ample, 72);
+        int mmAlcada = llegir(alcada, 25);
+        int tipusPaper = paper.getSelectedItemPosition();
         prefs.edit()
-                .putString("impressora", adreca)
                 .putInt("ampleMm", mmAmple)
                 .putInt("alcadaMm", mmAlcada)
                 .putBoolean("mostrarNumero", mostrarText.isChecked())
+                .putInt("paper", tipusPaper)
                 .apply();
 
-        final String zpl = Zpl.etiqueta(num, mmAmple, mmAlcada, mostrarText.isChecked());
-        imprimir.setEnabled(false);
+        String zpl = Zpl.etiqueta(num, mmAmple, mmAlcada, mostrarText.isChecked(), tipusPaper);
         mostrarEstat("Imprimint " + num + "...", false);
+        enviarEnSegonPla(adreca, zpl, "Imprès: " + num, true);
+    }
 
+    /** Fa que la impressora mesuri el paper (on comença i acaba cada etiqueta). */
+    private void calibrar() {
+        String adreca = impressoraTriada();
+        if (adreca == null) return;
+        int tipusPaper = paper.getSelectedItemPosition();
+        prefs.edit().putInt("paper", tipusPaper).apply();
+        mostrarEstat("Calibrant...", false);
+        enviarEnSegonPla(adreca, Zpl.calibrar(tipusPaper), "Calibrada. Ja pots imprimir.", false);
+    }
+
+    private String impressoraTriada() {
+        int pos = impressores.getSelectedItemPosition();
+        if (!tePermis() || pos < 0 || pos >= adreces.size()) {
+            mostrarEstat("Tria una impressora aparellada.", true);
+            return null;
+        }
+        String adreca = adreces.get(pos);
+        prefs.edit().putString("impressora", adreca).apply();
+        return adreca;
+    }
+
+    private void enviarEnSegonPla(final String adreca, final String dades, final String ok, final boolean buidarNumero) {
+        imprimir.setEnabled(false);
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final String clauZpl = "zpl_" + adreca;
-                String error = enviar(adreca, zpl, !prefs.getBoolean(clauZpl, false));
+                final String clauZpl = "zpl_v2_" + adreca;
+                String error = enviar(adreca, dades, !prefs.getBoolean(clauZpl, false));
                 if (error == null) prefs.edit().putBoolean(clauZpl, true).apply();
-                final String missatge = error == null ? "Imprès: " + num : "Error: " + error;
+                final String missatge = error == null ? ok : "Error: " + error;
                 final boolean esError = error != null;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         imprimir.setEnabled(true);
                         mostrarEstat(missatge, esError);
-                        if (!esError) {
+                        if (!esError && buidarNumero) {
                             numero.setText("");
                             numero.requestFocus();
                         }
@@ -284,9 +327,8 @@ public class MainActivity extends Activity {
             OutputStream out = socket.getOutputStream();
             if (configurar) {
                 // Primer cop amb aquesta impressora: si està en mode línia (line_print) imprimiria el ZPL com a text,
-                // així que la passem a ZPL i li diem que el paper són etiquetes, no rotllo continu.
-                out.write(("! U1 setvar \"device.languages\" \"zpl\"\r\n"
-                        + "! U1 setvar \"media.type\" \"label\"\r\n").getBytes(StandardCharsets.US_ASCII));
+                // així que la passem a ZPL. El tipus de paper va dins de cada etiqueta (^MN).
+                out.write("! U1 setvar \"device.languages\" \"zpl\"\r\n".getBytes(StandardCharsets.US_ASCII));
                 out.flush();
                 Thread.sleep(1000);
             }
