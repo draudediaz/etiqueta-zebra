@@ -133,9 +133,9 @@ public class MainActivity extends Activity {
         mides.setOrientation(LinearLayout.HORIZONTAL);
         mides.setPadding(0, dp(16), 0, 0);
         ample = campMida(prefs.getInt("ampleMm", 72));
-        alcada = campMida(prefs.getInt("alcadaMm", 25));
-        mides.addView(columna("Ample (mm)", ample), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        mides.addView(columna("Alçada (mm)", alcada), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        alcada = campMida(prefs.getInt("alcadaMm", 55));
+        mides.addView(columna("Ample etiqueta (mm)", ample), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        mides.addView(columna("Alçada etiqueta (mm)", alcada), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         arrel.addView(mides);
 
         arrel.addView(etiqueta("Alçada del codi de barres (mm)"));
@@ -143,9 +143,9 @@ public class MainActivity extends Activity {
         alcadaBarres.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         alcadaBarres.setSingleLine(true);
         alcadaBarres.setText(String.format(java.util.Locale.ROOT, "%.1f", prefs.getFloat("alcadaBarresMm",
-                Zpl.alcadaPerDefecte(prefs.getInt("alcadaMm", 25), prefs.getBoolean("mostrarNumero", true)))));
+                Zpl.alcadaPerDefecte(prefs.getInt("alcadaMm", 55), prefs.getBoolean("mostrarNumero", true)))));
         arrel.addView(alcadaBarres);
-        arrel.addView(etiqueta("Marges laterals automàtics. Si el codi no hi cap, no s'imprimirà."));
+        arrel.addView(etiqueta("Alçada només de les barres, en mm. El conjunt es centra a l'etiqueta. Cal espai per als marges i el número."));
 
         mostrarText = new CheckBox(this);
         mostrarText.setText("Mostrar el número sota el codi");

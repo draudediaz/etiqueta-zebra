@@ -8,10 +8,16 @@ Descarrega [`EtiquetaZebra.apk`](EtiquetaZebra.apk) al mòbil (botó de descàrr
 
 1. Aparella la ZQ320 Plus des dels ajustos de Bluetooth del mòbil.
 2. Obre l'app i accepta el permís de *Dispositius propers*.
-3. Tria la impressora (recorda l'última), ajusta ample/alçada en mm si cal (per defecte 72 × 25) i imprimeix.
+3. Tria la impressora (recorda l'última), ajusta ample/alçada en mm si cal (per defecte 72 × 55) i imprimeix. Si actualitzes una instal·lació existent, es conserven les mides desades: introdueix 55 a **Alçada etiqueta (mm)** per al paper de 72 × 55 mm.
 4. El camp **Alçada del codi de barres (mm)** permet ajustar les barres independentment de l'etiqueta, amb decimals (coma o punt). El valor es recorda en imprimir. Inicialment és un 30% inferior a l'alçada anterior: 9,8 mm per a una etiqueta de 72 × 25 mm amb número visible, arrodonits als punts de la impressora.
 
 ## Marges i límits
+
+La versió 1.5 recupera el número natiu del Code 128, amb la mateixa configuració de font que la versió 1.3, sense estrènyer-lo per encabir-lo sota les barres. El conjunt de barres i número es centra horitzontalment i verticalment, reservant 5 mm per al text. Si el número visible no cap a mida llegible, cal més amplada o ocultar-lo; no es redueix la font.
+
+Les alçades són en mil·límetres: en una etiqueta de 25 mm amb número visible el màxim de les barres és 14 mm. Per a barres de 30 mm cal paper d'almenys 41 mm d'alçada. L'avís mostra aquests límits segons les mides introduïdes.
+
+La versió 1.5 manté la signatura de la 1.4 i es pot instal·lar directament com a actualització.
 
 - Code 128 numèric, amb selecció explícita dels subconjunts C/B per calcular l'amplada exacta, inclosos números senars i zeros inicials.
 - Codi centrat amb una zona blanca a cada costat d'almenys 3 mm o 10 vegades l'amplada del mòdul, el valor més gran. Les barres s'ajusten entre 4 i 2 punts (0,5–0,25 mm a 203 dpi).
@@ -44,5 +50,5 @@ Sense Gradle, amb les eines de l'SDK d'Android (a Ubuntu: `apt install android-s
 Per al número `12345` amb etiqueta de 72 × 25 mm:
 
 ```
-^XA^CI28^PW576^LL200^LH0,0^MNY^CF0,30^FO130,24^BY4,3,78^BCN,78,N,N,N,N^FD>;1234>65^FS^FO130,106^A0N,30,20^FB316,1,0,C,0^FD12345^FS^XZ
+^XA^CI28^PW576^LL200^LH0,0^MNY^CF0,30^FO130,41^BY4,3,78^BCN,78,Y,N,N,N^FD>;1234>65^FS^XZ
 ```
