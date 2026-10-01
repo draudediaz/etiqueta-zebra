@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
     private EditText numero;
     private EditText ample;
     private EditText alcada;
+    private EditText alcadaBarres;
     private CheckBox mostrarText;
     private Spinner paper;
     private Spinner impressores;
@@ -136,6 +137,15 @@ public class MainActivity extends Activity {
         mides.addView(columna("Ample (mm)", ample), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         mides.addView(columna("Alçada (mm)", alcada), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         arrel.addView(mides);
+
+        arrel.addView(etiqueta("Alçada del codi de barres (mm)"));
+        alcadaBarres = new EditText(this);
+        alcadaBarres.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        alcadaBarres.setSingleLine(true);
+        alcadaBarres.setText(String.format(java.util.Locale.ROOT, "%.1f", prefs.getFloat("alcadaBarresMm",
+                Zpl.alcadaPerDefecte(prefs.getInt("alcadaMm", 25), prefs.getBoolean("mostrarNumero", true)))));
+        arrel.addView(alcadaBarres);
+        arrel.addView(etiqueta("Marges laterals automàtics. Si el codi no hi cap, no s'imprimirà."));
 
         mostrarText = new CheckBox(this);
         mostrarText.setText("Mostrar el número sota el codi");
@@ -237,19 +247,33 @@ public class MainActivity extends Activity {
             mostrarEstat("Escriu un número.", true);
             return;
         }
+        int mmAmple;
+        int mmAlcada;
+        float mmBarres;
+        int tipusPaper = paper.getSelectedItemPosition();
+        String zpl;
+        try {
+            mmAmple = Integer.parseInt(ample.getText().toString().trim());
+            mmAlcada = Integer.parseInt(alcada.getText().toString().trim());
+            mmBarres = Float.parseFloat(alcadaBarres.getText().toString().trim().replace(',', '.'));
+            zpl = Zpl.etiqueta(num, mmAmple, mmAlcada, mmBarres, mostrarText.isChecked(), tipusPaper);
+        } catch (NumberFormatException ex) {
+            mostrarEstat("Introdueix mides vàlides en mm. L'ample i l'alçada de l'etiqueta han de ser enters.", true);
+            return;
+        } catch (IllegalArgumentException ex) {
+            mostrarEstat(ex.getMessage(), true);
+            return;
+        }
         final String adreca = impressoraTriada();
         if (adreca == null) return;
-        int mmAmple = llegir(ample, 72);
-        int mmAlcada = llegir(alcada, 25);
-        int tipusPaper = paper.getSelectedItemPosition();
         prefs.edit()
                 .putInt("ampleMm", mmAmple)
                 .putInt("alcadaMm", mmAlcada)
+                .putFloat("alcadaBarresMm", mmBarres)
                 .putBoolean("mostrarNumero", mostrarText.isChecked())
                 .putInt("paper", tipusPaper)
                 .apply();
 
-        String zpl = Zpl.etiqueta(num, mmAmple, mmAlcada, mostrarText.isChecked(), tipusPaper);
         mostrarEstat("Imprimint " + num + "...", false);
         enviarEnSegonPla(adreca, zpl, "Imprès: " + num, true);
     }
@@ -298,15 +322,6 @@ public class MainActivity extends Activity {
                 });
             }
         }).start();
-    }
-
-    private static int llegir(EditText e, int perDefecte) {
-        try {
-            int v = Integer.parseInt(e.getText().toString().trim());
-            return v > 0 ? v : perDefecte;
-        } catch (NumberFormatException ex) {
-            return perDefecte;
-        }
     }
 
     /** Envia el ZPL per Bluetooth clàssic (SPP). Retorna null si ha anat bé, o el missatge d'error. */
